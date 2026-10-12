@@ -1,0 +1,29 @@
+[
+  {
+    "id": "email_001",
+    "source_type": "email",
+    "sender": "hr@innovatetech.com",
+    "subject": "Interview Invitation - Senior Edge AI Engineer",
+    "received_at": "2026-10-12T09:30:00",
+    "content": "Hi Alex, we would like to invite you for an in-person interview on Friday, Oct 16 at 3:00 PM in Office A (7F, Tech Park Tower). Please prepare your portfolio and bring a printed copy.",
+    "is_authorized": true
+  },
+  {
+    "id": "email_002",
+    "source_type": "email",
+    "sender": "professor.chen@university.edu",
+    "subject": "Capstone Project Proposal Deadline Notice",
+    "received_at": "2026-10-12T10:15:00",
+    "content": "Dear students, please be reminded that the final Capstone Project document submission is due next Monday, Oct 19 at 5:00 PM. Make sure you finish peer reviews and upload the PDF file to the portal.",
+    "is_authorized": true
+  },
+  {
+    "id": "email_003",
+    "source_type": "email",
+    "sender": "newsletter@promotions.com",
+    "subject": "50% Off Pizza Weekend Special",
+    "received_at": "2026-10-12T11:00:00",
+    "content": "Enjoy delicious discounts this weekend! Order now through our mobile app.",
+    "is_authorized": true
+  }
+]

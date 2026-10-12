@@ -1,0 +1,26 @@
+[
+  {
+    "id": "msg_001",
+    "source_type": "message",
+    "sender": "Lead Recruiter Sarah (Slack)",
+    "received_at": "2026-10-12T09:45:00",
+    "content": "Regarding your interview on Friday at 15:00: Please bring your portfolio on a USB drive as well.",
+    "is_authorized": true
+  },
+  {
+    "id": "msg_002",
+    "source_type": "message",
+    "sender": "Project PM David (Teams)",
+    "received_at": "2026-10-12T13:00:00",
+    "content": "Quick reminder team: Sync sprint review online meeting tomorrow at 10:00 AM on Zoom. Please sign in and check audio equipment 10 minutes before.",
+    "is_authorized": true
+  },
+  {
+    "id": "msg_003",
+    "source_type": "message",
+    "sender": "Friend Bob",
+    "received_at": "2026-10-12T14:20:00",
+    "content": "Hey, did you watch the basketball game yesterday?",
+    "is_authorized": true
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "cal_001",
+    "source_type": "calendar",
+    "title": "Interview in Office A",
+    "start_time": "2026-10-16T15:00:00",
+    "end_time": "2026-10-16T16:30:00",
+    "location": "Office A, 7F, Tech Park Tower",
+    "notes": "Scheduled with innovate tech team",
+    "is_authorized": true
+  },
+  {
+    "id": "cal_002",
+    "source_type": "calendar",
+    "title": "Sprint Review Sync",
+    "start_time": "2026-10-13T10:00:00",
+    "end_time": "2026-10-13T11:00:00",
+    "location": "Zoom Room #9283",
+    "notes": "Discuss milestone deliverables",
+    "is_authorized": true
+  }
+]
