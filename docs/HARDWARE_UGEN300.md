@@ -1,58 +1,27 @@
-# Hardware Integration: ASUS UGen300 AI Accelerator (Hailo-8)
+# Hardware and honest validation
+## Correct target
+ASUS UGen300 uses Hailo-10H, up to 40 TOPS INT4 / 20 TOPS INT8.
+Do not identify it as Hailo-8 26 TOPS.
+Official specifications: https://www.asus.com/me-en/motherboards-components/ai-accelerator/ugen/ugen300-usb-8g/
 
-> Track: **2026 ASUS UGen AI League — Lightweight Track (Battlefield Lightning)**  
-> Hardware: **ASUS UGen300 AI Accelerator (Hailo-8 NPU, 26 TOPS)**
+## Current implementation
+The real development backend is local Ollama with Qwen3 4B.
+The development PC reports NVIDIA RTX 4050 Laptop GPU with approximately 6GB VRAM.
+A CPU/GPU local run is not an NPU benchmark. No wattage or NPU latency is fabricated.
+The old sleep-based simulator and claims of 28.4ms / 98.8% F1 have been removed.
 
----
+## UGen300 transition
+1. Obtain the actual kit or the organizer's official SDV environment.
+2. Install the matching HailoRT and Hailo GenAI runtime.
+3. Use an officially supported compiled model, initially Qwen3-1.7B-Instruct.
+4. Start Hailo-Ollama, then set backend=hailo, endpoint=http://127.0.0.1:8000,
+   and the model identifier reported by that runtime. Do not assume an Ollama GGUF is portable.
+5. Run the same extraction dataset and end-to-end scheduling checks on the kit.
+6. Record actual loading latency, extraction accuracy, generation latency, memory and measured power.
+   Leave unavailable metrics blank.
 
-## 1. Hardware Overview & Track Alignment
-
-The **Lightweight Track (Battlefield Lightning)** focuses on edge AI inference, low-power contextual awareness, and responsive on-device processing. The **ASUS UGen300 AI Accelerator** features the Hailo-8 edge neural processing unit (NPU), offering:
-- **Compute Power**: Up to 26 TOPS (Tera-Operations Per Second)
-- **Typical Power Consumption**: ~2.5 Watts
-- **Host Form Factor**: M.2 2280 / PCIe expansion module designed for ASUS commercial desktops and edge PCs
-- **Software Stack**: HailoRT runtime, Hailo Dataflow Compiler, and ONNX INT8 quantization toolkit
-
----
-
-## 2. On-Device Model Pipeline & Quantization Strategy
-
-```
-  +-------------------------+
-  | Pre-trained NLP Model   |  (e.g., MobileBERT / MiniLM-L6 Slot-Filling)
-  +------------+------------+
-               |
-               v
-  +-------------------------+
-  | Hailo Dataflow Compiler |  (Post-Training INT8 Quantization & Layer Allocation)
-  +------------+------------+
-               |
-               v
-  +-------------------------+
-  | Compiled HEF Binary     |  (.hef executable optimized for UGen300 NPU)
-  +------------+------------+
-               |
-               v
-  +-------------------------+
-  | ASUS UGen300 HailoRT    |  (Zero-copy PCIe DMA memory streaming via VStreams)
-  +-------------------------+
-```
-
-### Quantization & Efficiency Highlights
-1. **INT8 Quantization**: Weights and activations are converted to 8-bit integers using symmetric uniform quantization with calibration fixtures, maintaining >98.8% F1-score relative to FP32 while reducing memory bandwidth requirements by 4x.
-2. **Sub-30ms Extraction Latency**: Typical end-to-end inference per text snippet is ~28.4 ms, running well below perceptible interaction latency.
-3. **Thermal & Energy Envelope**: The ~2.4W operational draw prevents thermal throttling on compact desktop machines and fanless edge hardware.
-
----
-
-## 3. Software-Defined Validation (SDV) & Stage II Transition
-
-In **Stage I**, the project integrates an **SDV (Software-Defined Validation) Adapter** (`proactive_pet/ai/hailo_ugen300_adapter.py`):
-- Provides seamless drop-in API compatibility with the native `hailo_platform` library.
-- Simulates realistic hardware timing, buffer sizes, and memory usage for development and automated testing.
-- Allows immediate verification on developer PCs without requiring physical accelerator hardware pre-installation.
-
-In **Stage II** (after UGen300 hardware distribution by ASUS):
-- The adapter connects to the physical ASUS UGen300 PCIe/M.2 device via `hailo_platform.VDevice`.
-- Pre-compiled `.hef` model streams execute natively with zero software architecture modifications.
-- Live resource monitoring via ASUS telemetry SDK benchmarks actual hardware power draw and temperatures.
+Hailo model page: https://hailo.ai/products/hailo-software/model-explorer/generative-ai/qwen3-1-7b-instruct/
+It lists context length 2048; trim input/context for that runtime.
+Runtime: https://github.com/hailo-ai/hailo_model_zoo_genai
+The application Hailo adapter validates returned JSON but does not assume Ollama JSON-schema support.
+Status: adapter prepared, physical hardware and official SDV integration NOT validated.

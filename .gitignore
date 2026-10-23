@@ -45,3 +45,11 @@ desktop.ini
 *.hef
 *.har
 hailo_build/
+
+# Local runtime, private data, and test output
+.runtime/
+data/
+inbox/
+demo_inbox/
+*.sqlite*
+test-results/

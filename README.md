@@ -1,214 +1,70 @@
-<div align="center">
+# 呱呱 · Proactive AI Desktop Pet
+A local AI desktop companion that turns messages into persistent reminders.
 
-# 🐾 PROACTIVE AI DESKTOP PET
-### *A local AI companion that remembers what needs your attention.*
+## 在這台電腦開始使用
+1. 雙擊 `Start-Pet.cmd`。
+2. 確認模型狀態顯示「模型已就緒：qwen3:4b」。
+3. 輸入「五分鐘後要開專題會議，請先準備簡報。」並按「用本機 AI 分析」。
+4. 事件會出現在清單；預設開始前 1 分鐘自動提醒。
+5. 要改期，選取事件、勾選「這段訊息更新選取的事件」，輸入「剛才的專題會議延後十分鐘」。
+6. 可用中文取消、手動修正時間、標記準備完成、完成事件、延後提醒或查看原文。
 
-[![ASUS Hackathon](https://img.shields.io/badge/ASUS_UGen_AI_League_2026-Lightweight_Track-0284C7.svg)](https://github.com/jiajiaz0223/PROACTIVE-AI-DESKTOP-PET)
-[![Accelerator](https://img.shields.io/badge/Hardware-ASUS_UGen300_(Hailo--8)-0D9488.svg)](docs/HARDWARE_UGEN300.md)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB.svg?logo=python&logoColor=white)](https://python.org)
-[![Privacy](https://img.shields.io/badge/Privacy-100%25_On--Device-10B981.svg)](docs/ARCHITECTURE.md)
-[![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B.svg)](LICENSE)
+## 功能範圍
+- 真實 Ollama 本機模型，預設 Qwen3 4B；沒有關鍵字規則冒充 AI。
+- AI 分析在背景執行，視窗及排程持續回應。
+- 結構化事件檢查、模糊／過期資訊進待確認清單。
+- SQLite 保存事件、來源、待確認項與提醒狀態；重啟可恢復。
+- 保守合併：相同名稱、時間與不衝突地點；改期使用明確事件 ID。
+- 自動提醒，22:00–08:00 可選安靜時段；準備與開始提醒至少間隔 30 分鐘。
+- 每事件最多 3 次已送達提醒（包含稍後提醒）。手動延後為真實模式 15 分鐘／展示模式 1 分鐘。
+- TXT、純文字 EML、單次 ICS 匯入；監看專案 inbox 的新內容。
+- 獨立展示模式：獨立資料庫、快轉時鐘、相同排程流程。
+- 本機事件紀錄匯出；只回報實測分析時間，不宣稱未量測的功耗。
+- Hailo-Ollama 接口可設定；UGen300 實機尚未驗證。
 
-**[ English ]** | [ 繁體中文導覽 ](#-繁體中文專案導覽)
+## 本機安裝與啟動
+Python 3.10+（含 tkinter）。應用程式不需要額外 Python 套件。
+初次安裝本機模型（需網路與數 GB 磁碟空間）：
 
----
-
-### 🎥 [Watch 3-Minute Practical Demo Video (YouTube)](#-3-minute-stage-i-demo-walkthrough)
-*Stage I Submission Requirement: Under 3-minute video validating autonomous analysis and proactive reminder execution.*
-
-</div>
-
----
-
-## 📌 Competition Overview & Alignment
-
-This repository is submitted to the **2026 ASUS UGen AI League 創新黑客松**:
-
-- **Track**: **輕量運算組 / Battlefield Lightning**
-- **Target Hardware Accelerator**: **ASUS UGen300 AI Accelerator** (Hailo-8 Edge NPU, 26 TOPS, ~2.5W TDP)
-- **Application Domains**: **Workplace AI** (Efficiency & Automation) & **Everyday AI** (Daily Living Companion)
-- **Stage I Deliverables**: 20-Page English Pitch Deck, Working GitHub Repository, and 3-Minute Video Walkthrough.
-
----
-
-## 💡 The Core Problem: The Scheduling Gap
-
-Every day, crucial plans and requirements arrive across fragmented channels:
-- **Emails**: Official invitations, deadlines, and submission instructions.
-- **Chat Messages (Slack/Teams)**: Informal additions, room changes, and preparation requests (*"bring your portfolio"*).
-- **Calendars**: Generic event placeholders often missing context or venue details.
-
-```
-Plans arrive everywhere  --->  Every manual handoff can fail
-Email / Chat / Calendar       Receive -> Notice -> Record -> Set timer -> Act on time
-```
-
-**The pain point**: Setting manual reminders for every task is tedious. Traditional cloud AI exposes sensitive communications to remote servers, and background polling drains computer resources.
-
----
-
-## 🚀 Our Solution: Proactive AI Desktop Pet
-
-**Proactive AI Desktop Pet** is an autonomous on-device companion that:
-1. **Reads Authorized Information**: Scans emails, messages, and calendars completely locally.
-2. **Understands Natural Language on Edge NPU**: Uses quantized INT8 models accelerated by **ASUS UGen300 (Hailo-8)** to parse events and preparation needs in `< 30 ms`.
-3. **Merges Multi-Source Fragments**: Unifies complementary details into **ONE cohesive event** (*Slide 8*).
-4. **Calculates Contextual Lead Times**: Derives intelligent lead times (e.g., preparation reminders the day before; transit buffer before departure) rather than fixed alarms (*Slide 10*).
-5. **Operates 100% Offline with Zero Cloud Dependency**: Full privacy and energy efficiency with `< 0.5%` idle CPU usage (*Slide 15*).
-
-```
-                      +---------------------------------------+
-                      |               EMAIL                   |
-                      |   "Interview on Friday at 15:00"      |
-                      +-------------------+-------------------+
-                                          |
-+-----------------------------------+     |     +-----------------------------------+
-|              MESSAGE              |     |     |             CALENDAR              |
-|   "Please bring your portfolio"   | <---+---> |      "Interview in Office A"      |
-+-----------------+-----------------+           +-----------------+-----------------+
-                  |                                               |
-                  +-----------------------+-----------------------+
-                                          |
-                                          v
-                      +---------------------------------------+
-                      |               ONE EVENT               |
-                      |         Interview • Friday 15:00      |
-                      |           Office A • Portfolio        |
-                      +---------------------------------------+
-```
-
----
-
-## 🏗️ System & Hardware Architecture
-
-```
-+-----------------------------------------------------------------------------------------+
-|                              LOCAL ON-DEVICE PRIVACY BOUNDARY                           |
-|                                                                                         |
-|  +--------------------+        +---------------------+        +----------------------+  |
-|  | Authorized Sources | -----> |  ASUS UGen300 NPU   | -----> | Deduplication Engine |  |
-|  | Email/Chat/Calendar|        |  (Hailo-8, INT8)    |        | (Cross-Source Merge) |  |
-|  +--------------------+        +---------------------+        +----------+-----------+  |
-|                                                                          |              |
-|  +--------------------+        +---------------------+                   |              |
-|  | Floating Pet UI    | <----- | Update-Triggered    | <-----------------+              |
-|  | Speech & Controls  |        | Scheduler (Timer)   |        Strategy Engine           |
-|  +--------------------+        +---------------------+        (Lead times & Quiet hrs)  |
-+-----------------------------------------------------------------------------------------+
-```
-
-### ⚡ ASUS UGen300 Hardware Acceleration (Hailo-8)
-- **Acceleration Pipeline**: Quantized INT8 slot-filler executed directly on Hailo-8 NPU via `VStreams`.
-- **Latency**: **28.4 ms** average extraction latency.
-- **Power Efficiency**: **~2.4 W** active NPU power draw.
-- **Stage II Readiness**: Includes an SDV (Software-Defined Validation) adapter for simulation and immediate native hardware deployment upon physical kit delivery.
-- *Detailed hardware analysis available in [docs/HARDWARE_UGEN300.md](docs/HARDWARE_UGEN300.md).*
-
----
-
-## 🎯 Proactive Interaction Model (Slide 13)
-
-When a proactive reminder triggers, the desktop companion presents an actionable prompt:
-
-> **🐾 “Your interview starts in 45 minutes. Check that your portfolio is packed.”**
->
-> `[ View details ]` `[ Remind me later ]` `[ Preparation done ]`
-
-- **[View details]**: Inspects merged sources and extracted context.
-- **[Remind me later]**: Temporarily snoozes prompt by 15 minutes.
-- **[Preparation done]**: Immediately cancels further preparation reminders while preserving the departure alert (*Slide 11*).
-
----
-
-## 📈 Commercial Viability & Business Model (BMC)
-
-*(Evaluation Weighting: 35% Commercial Potential)*
-
-- **STP Strategy**: Target freelancers, project workers, and university students juggling fragmented schedules.
-- **Product-Led Growth**: Free core with essential calendar/email reminders + $3.99/mo Personal Premium tier with extended integrations and personalized pet skins.
-- **ASUS Synergy**: Strategic opportunity to bundle as a signature built-in AI companion for ASUS Copilot+ / AI PCs equipped with the UGen300 accelerator.
-- *Full business plan available in [docs/BUSINESS_PLAN.md](docs/BUSINESS_PLAN.md).*
-
----
-
-## ⚡ Quickstart Guide
-
-### 1. Requirements
-- Python 3.10 or newer (tested on 3.10, 3.11, 3.12, 3.14)
-- No complex C++ builds required; runs natively on Windows, macOS, and Linux.
-
-### 2. Installation
-```bash
-git clone https://github.com/jiajiaz0223/PROACTIVE-AI-DESKTOP-PET.git
-cd PROACTIVE-AI-DESKTOP-PET
-pip install -r requirements.txt
-```
-
-### 3. Launch Interactive Demo (GUI Pet + Judge Dashboard)
-```bash
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\setup_local_model.ps1
 python run_pet.py
 ```
-*Launches the floating cyber pet widget along with the step-by-step hackathon judging panel.*
 
-### 4. Run Automated Offline Benchmark (Headless)
-```bash
-python run_offline_benchmark.py
+Ollama 可攜版放在 `.runtime/ollama`，模型放在 `.runtime/models`。
+服務只綁定 `127.0.0.1:11435`，設定 `OLLAMA_NO_CLOUD=1`。
+程式會自動啟動專案本機服務；不修改系統預設模型服務。
+模型載入失敗時明確顯示錯誤，不使用模擬結果替代。
+
+## 真實資料與展示資料
+- `data/events.sqlite`：日常事件。
+- `data/demo.sqlite`：展示事件。
+- `inbox/`：日常監看資料夾；`demo_inbox/`：展示監看資料夾。
+- `python make_demo_sources.py`：產生時間新鮮的 TXT／EML／ICS 範例到 `demo_samples/`，再自行匯入。
+- 原有 `fixtures/` 為歷史範例，日期可能已過；不會偷偷改成未來。
+- 不同模式各允許一個執行個體，避免重複通知。
+- 初次從模型開機載入可能較慢；熱啟動效能請以實測報告為準。
+
+## 測試
+```powershell
+python run_checks.py
+python run_checks.py --model
 ```
-*Validates the entire 6-step pipeline, multi-source deduplication, and hardware metrics in seconds.*
+第一個命令只測試事件與排程；第二個額外呼叫真實本機模型。
+測試失敗會回傳非零狀態，不固定印出 PASS。
+模型報告輸出至 `test-results/live-model-report.json`。
+模型測試阻擋 Python 測試程序的非 loopback 連線；不是關閉 Windows 網卡的測試。
 
----
+## 限制
+- 電腦與程式須保持運作。重新開啟只補發 15 分鐘內、尚未開始的事件提醒；更舊或已過期提醒略過。
+- 資料保存在本機，但未加密；目前沒有雲端同步、Gmail／Teams／Slack OAuth 連接器。
+- ICS 支援單次事件、UTC／台北／上海／本機浮動時間；重複、全天和其他時區需先轉換或手動確認。
+- 模型仍可能判斷錯誤。請從來源檢查結果，重要事件可手動修正。
+- 台北為固定時區；跨時區旅行和多裝置同步尚未實作。
+- 安靜時段把提醒往前移，若可用時間已過則不安排；清單的「下一次提醒」會顯示空白。
+- 本機 GPU 推論完成不代表完成 UGen300 實機驗證。參見 docs/HARDWARE_UGEN300.md。
 
-## 📂 Repository Structure
-
-```
-PROACTIVE-AI-DESKTOP-PET/
-├── README.md                      # Comprehensive project specification & competition pitch
-├── run_pet.py                     # Primary GUI application entry point
-├── run_offline_benchmark.py       # Automated headless validation benchmark
-├── requirements.txt               # Dependencies
-├── LICENSE                        # MIT Open Source License
-├── docs/                          # In-depth architectural & business documentation
-│   ├── ARCHITECTURE.md            # Detailed system pipeline & low-power design
-│   ├── HARDWARE_UGEN300.md        # ASUS UGen300 (Hailo-8) integration & SDV specs
-│   ├── BUSINESS_PLAN.md           # STP analysis, BMC, and monetization roadmap (35%)
-│   └── DEMO_GUIDE.md              # 6-step demo walkthrough & 3-minute video script
-├── fixtures/                      # Local data samples (Slide 7, 8, 16)
-│   ├── email_samples.json         # Realistic email invitations
-│   ├── message_samples.json       # Slack/Teams preparation requests
-│   └── calendar_samples.json      # Existing calendar entries
-└── proactive_pet/                 # Core modular Python codebase
-    ├── models.py                  # Dataclasses for sources, events, and triggers
-    ├── ingestion/
-    │   └── reader.py              # Local privacy-compliant source reader
-    ├── ai/
-    │   ├── extractor.py           # On-device natural language event extraction
-    │   └── hailo_ugen300_adapter.py # ASUS UGen300 / Hailo-8 NPU adapter & SDV
-    ├── engine/
-    │   ├── deduplicator.py        # Cross-source deduplication (Slide 8)
-    │   ├── strategy_engine.py     # Dynamic lead-time & quiet-hours engine (Slide 10)
-    │   └── scheduler.py           # Update-triggered event scheduler (Slide 15)
-    └── ui/
-        ├── pet_window.py          # Floating on-screen pet widget & controls (Slide 13)
-        └── control_panel.py       # Judge evaluation dashboard & simulator
-```
-
----
-
-## 🇹🇼 繁體中文專案導覽
-
-本專案專為 **2026 ASUS UGen AI League 創新黑客松（輕量運算組 / Battlefield Lightning）** 打造：
-- **核心定位**：基於華碩 **ASUS UGen300 AI 加速卡（Hailo-8 Edge NPU）** 的本地端主動式 AI 桌面陪伴寵物。
-- **解決痛點**：現代人行程與瑣碎待辦散落在信箱、Slack、Teams 與日曆，傳統行事曆缺乏前置準備提醒，而雲端 AI 則存在個人隱私洩漏與耗電問題。
-- **三大核心技術突破**：
-  1. **跨來源自動去重與補全（Slide 8）**：自動將信件、通訊軟體叮嚀與日曆合併為單一完整事件（例如：面試 + 作品集準備 + 地點 Office A）。
-  2. **情境化前置準備策略（Slide 10）**：針對面試自動排定「前一天準備作品集」與「出發前 45 分鐘提醒」，而非呆板的單一鬧鐘。
-  3. **事件更新驅動低功耗排程（Slide 15）**：日常待機 CPU 使用率 `< 0.5%`，僅在收到新資訊時啟動 ASUS UGen300 進行極速推論（延遲僅 ~28.4ms），兼顧續航與隱私。
-- **商業潛力（35% 評選配分）**：針對自由工作者與大學生族群，採免費核心 + 個人進階版訂閱制，並可作為華碩 AI PC 系列的原生預載亮點應用。
-
----
-
-## 🏆 Acknowledgments & Team
-
-- **Organizer**: 華碩電腦股份有限公司 (ASUSTeK Computer Inc.)
-- **Co-organizers**: Intel Corporation, Hailo Technologies Ltd.
-- **Competition Track**: 2026 ASUS UGen AI League — Lightweight Track
+## Competition positioning
+Workplace AI / Lightweight track. Demonstrate: ingest, local understanding,
+validated event, automatic reminder, reschedule/cancel, restart continuity.
+Business value and pricing remain hypotheses; see docs/BUSINESS_PLAN.md.

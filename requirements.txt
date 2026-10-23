@@ -1,11 +1,2 @@
-# Core dependencies for Proactive AI Desktop Pet MVP
-# Designed to be lightweight, zero-bloat, and instant to run
-
-# Standard GUI & Processing run out-of-the-box with Python 3.10+ (tkinter, sqlite3, dataclasses, json)
-
-# Optional dependencies for Stage II hardware integration & enhanced offline models:
-# hailo-platform>=4.18.0     # For native ASUS UGen300 (Hailo-8) hardware acceleration
-# onnxruntime>=1.16.0        # For Edge AI ONNX INT8 model execution
-# psutil>=5.9.0              # For real-time hardware resource benchmarking
-psutil>=5.9.0
-requests>=2.31.0
+# Standard library only. Python must include tkinter.
+# Local Ollama and a model are installed separately.

@@ -1,47 +1,27 @@
-# Demo Guide & 3-Minute Video Walkthrough Script
+# 三分鐘展示流程
+開始前：雙擊 Start-Pet.cmd，確認模型就緒；按「開啟獨立展示模式」。
+模型冷載入先跑一次，之後換新句子展示。不要把熱啟動當成首次載入效能。
 
-> ASUS Hackathon Stage I Requirement: **Under 3-minute practical demo video**  
-> Demo Sequence Protocol: **Slide 17 of Stage I Proposal**
+0:00–0:25 痛點
+「約定散落在訊息裡，常忘了轉成行事曆與準備提醒。」
 
----
+0:25–1:10 真實本機分析
+輸入「五分鐘後要開專題會議，請先準備簡報。」
+按 AI 分析，顯示事件、準備事項與來源。說明模型在本機執行。
 
-## 1. Quick Launch Options
+1:10–1:40 自動通知
+按「前往下一次提醒」：此按鈕只推進展示時鐘，通知由正常排程觸發。
+寵物顯示實際剩餘時間。日常模式不需按此按鈕，到點自動提醒。
 
-### Option A: Interactive GUI Demo (Floating Pet + Judge Dashboard)
-Run the following command in terminal:
-```bash
-python run_pet.py
-```
-- A floating cyber pet widget appears at the lower right of your screen.
-- The evaluation dashboard opens, allowing step-by-step trigger execution.
+1:40–2:15 修改
+選取事件並勾選更新選取事件，輸入「剛才的專題會議延後十分鐘」。
+查看新時間與舊提醒撤銷；再輸入「取消剛才的專題會議」確認停止。
 
-### Option B: Automated Headless Benchmark (Zero display required)
-```bash
-python run_offline_benchmark.py
-```
-- Validates the entire pipeline from ingestion to deduplication, strategy generation, dynamic replanning, and resource telemetry in seconds.
+2:15–2:40 資料與可靠性
+展示本機來源匯入、待確認項、重啟保存，以及實測報告。
+若要宣稱網卡斷線測試，請真的手動斷線後重跑；目前自動測試只限制程序的外部連線。
 
----
-
-## 2. 6-Step Live Demo Protocol (Slide 17)
-
-Follow these exact 6 steps on the evaluation dashboard or during video recording:
-
-| Step | Action on UI | Expected Outcome & Narration Point |
-| :---: | :--- | :--- |
-| **1** | Click **"1. Prepare Local Data"** | Loads 8 items from `fixtures/` representing email invitations, Slack messages, and calendar entries. Emphasize that all data is local. |
-| **2** | Click **"2. Disable Networking"** | Verifies offline continuity. Show that zero network traffic leaves the machine. |
-| **3** | Click **"3. Read & Analyze on Edge NPU"** | Simulates ASUS UGen300 (Hailo-8) INT8 execution. Show average extraction latency (~28.4 ms) and discard of irrelevant items. |
-| **4** | Click **"4. Show Merged Strategy & Source Context"** | **Demonstrates Slide 8**: Email + Message + Calendar merged into **ONE EVENT**: *Job Interview • Friday 15:00 • Office A • Portfolio*. Rationale and lead times are clearly calculated. |
-| **5** | Click **"5. Trigger Live Pet Proactive Reminder"** | The desktop pet pops up a speech bubble with the actionable prompt: *“Your interview starts in 45 minutes... Ensure Portfolio is packed.”* |
-| **6** | Click **"Preparation done"** on Pet | **Demonstrates Slide 11**: Preparation prompt is cleared, but departure alert remains scheduled. Shows that the AI pet adapts dynamically. |
-
----
-
-## 3. 3-Minute Video Recording Script
-
-- **0:00 - 0:30 (Problem)**: Show fragmented apps (Email, Slack, Calendar). Explain that crucial preparation details get lost before reaching the calendar.
-- **0:30 - 1:15 (On-Device Solution & Hardware)**: Introduce Proactive AI Desktop Pet powered by ASUS UGen300 (Hailo-8). Highlight 100% offline data privacy and ~28ms NPU inference speed.
-- **1:15 - 2:00 (Cross-Source Deduplication & Pet Interaction)**: Show how 3 fragmented items become 1 clear event. Demonstrate the floating pet delivering timely, actionable prompts.
-- **2:00 - 2:40 (Adaptive Dynamics & Resource Efficiency)**: Click "Preparation done", show automatic schedule adaptation, and display `< 0.5%` idle CPU usage.
-- **2:40 - 3:00 (Summary & Commercial Impact)**: Conclude with target market (freelancers & students) and ASUS hardware synergy.
+2:40–3:00 價值與下一步
+以事件擷取正確率、漏提醒率、干擾率與使用者回饋衡量價值。
+說明現在是 GPU 本機版本，UGen300 實機驗證為下一階段。
+不要宣稱既有 Gmail/Teams 整合、實測 NPU 功耗或未驗證的商業收入。
