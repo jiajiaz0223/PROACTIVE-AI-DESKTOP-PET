@@ -53,14 +53,26 @@ class Store:
             CREATE TABLE IF NOT EXISTS triggers(id TEXT PRIMARY KEY,event_id TEXT NOT NULL,
                 due TEXT NOT NULL,phase TEXT NOT NULL,status TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS activity_log(
+                id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT NOT NULL,message TEXT NOT NULL);
         ''')
         self.settings = {'quiet': False, 'quiet_start': 22, 'quiet_end': 8,
-                         'lead_minutes': 1, 'max_count': 3, 'min_spacing': 30}
+                         'lead_minutes': 1, 'max_count': 3, 'min_spacing': 30,
+                         'preparation_reminders': True}
         for row in self.db.execute('SELECT * FROM settings'):
             self.settings[row['key']] = json.loads(row['value'])
 
     def close(self):
         self.db.close()
+
+    def append_log(self,message):
+        timestamp=self.clock.now().isoformat()
+        with self.db:
+            self.db.execute('INSERT INTO activity_log(timestamp,message) VALUES (?,?)',(timestamp,str(message)))
+        return timestamp
+
+    def activity_log(self):
+        return [dict(row) for row in self.db.execute('SELECT timestamp,message FROM activity_log ORDER BY id')]
 
     def set_setting(self, key, value):
         self.settings[key] = value
@@ -104,6 +116,14 @@ class Store:
         if self.seen(source['id']):
             return ['相同內容已處理，沒有重複建立提醒。']
         messages = []
+        proposals=list(proposals)
+        # Clicking "整理成行程" is an explicit request to save an activity.
+        # An uncertain/empty model answer must remain visible and recoverable.
+        if source.get('user_requested_event') and not any(p.get('action')!='ignore' for p in proposals):
+            proposals=[{'action':'create','title':source['content'].strip()[:60] or '待確認活動',
+                        'time':None,'preparations':[], 'needs_review':True,
+                        'reason':'尚未辨識出完整活動，請確認名稱與時間。',
+                        'evidence':source['content']}]
         with self.db:
             for proposal in proposals:
                 try:
@@ -118,7 +138,7 @@ class Store:
     def _apply(self, p, source):
         action = p.get('action')
         if action == 'ignore':
-            return '未發現需要提醒的約定。'
+            return '已略過：' + (p.get('reason') or '模型判斷不是活動；原文已保留在本機。')
         if action not in ('create', 'update', 'cancel'):
             raise ValueError('無法判斷是新增、改期還是取消。')
         if p.get('needs_review'):
@@ -137,12 +157,12 @@ class Store:
         if not title:
             raise ValueError('缺少事件名稱。')
         when = p.get('time')
-        if p.get('relative_minutes') is not None:
-            when = (parse_time(source['timestamp']) + timedelta(minutes=p['relative_minutes'])).isoformat()
-        elif p.get('shift_minutes') is not None:
+        if p.get('shift_minutes') is not None:
             if old is None:
                 raise ValueError('需要先選取要延後或提前的事件。')
             when = (parse_time(old['time']) + timedelta(minutes=p['shift_minutes'])).isoformat()
+        elif p.get('relative_minutes') is not None:
+            when = (parse_time(source['timestamp']) + timedelta(minutes=p['relative_minutes'])).isoformat()
         if not when:
             when = (old or {}).get('time')
         if not when:
@@ -203,7 +223,7 @@ class Store:
         if action < now and at > now:
             action = now + timedelta(seconds=1)
         candidates = [('action', self.quiet_adjust(action))]
-        if event['preparations'] and not event['prep_done']:
+        if event['preparations'] and not event['prep_done'] and self.settings['preparation_reminders']:
             prep = (at - timedelta(days=1)).replace(hour=18, minute=0, second=0, microsecond=0)
             prep = self.quiet_adjust(prep)
             if (action - prep).total_seconds() >= int(self.settings['min_spacing']) * 60:
@@ -234,6 +254,18 @@ class Store:
                 self.db.execute("UPDATE triggers SET status='cancelled' WHERE event_id=? AND status='pending'", (eid,))
             self._put('events', e)
 
+    def delete_event(self, eid):
+        if not self.event(eid):
+            return False
+        with self.db:
+            self.db.execute('DELETE FROM triggers WHERE event_id=?',(eid,))
+            for item in self.pending():
+                if item['proposal'].get('target_event_id')==eid:
+                    self.db.execute('DELETE FROM pending WHERE id=?',(item['id'],))
+            self.db.execute('DELETE FROM events WHERE id=?',(eid,))
+        # Keep source fingerprints so a watched file does not recreate the event.
+        return True
+
     def triggers(self):
         return [dict(r) for r in self.db.execute("SELECT * FROM triggers WHERE status='pending' ORDER BY due")]
 
@@ -242,7 +274,7 @@ class Store:
         if not r:
             raise ValueError('找不到提醒。')
         e = self.event(r['event_id'])
-        if e['status'] != 'active' or (r['phase'] == 'preparation' and e['prep_done']):
+        if not e or e['status'] != 'active' or (r['phase'] == 'preparation' and e['prep_done']):
             raise ValueError('此事件或準備提醒已結束。')
         count = self.db.execute("SELECT count(*) FROM triggers WHERE event_id=? AND status='fired'", (e['id'],)).fetchone()[0]
         if count >= self.settings['max_count']:
@@ -254,6 +286,7 @@ class Store:
             # Repeated clicks on the same reminder replace the same snooze.
             self.db.execute('INSERT OR REPLACE INTO triggers VALUES (?,?,?,?,?)',
                             (tid + '_snooze', e['id'], due.isoformat(), r['phase'], 'pending'))
+        return due
 
     def tick(self):
         now, fired = self.clock.now(), []
@@ -262,6 +295,9 @@ class Store:
                 if parse_time(t['due']) > now:
                     continue
                 e = self.event(t['event_id'])
+                if not e:
+                    self.db.execute("UPDATE triggers SET status='skipped' WHERE id=?",(t['id'],))
+                    continue
                 quiet = self.settings['quiet'] and (now.hour >= self.settings['quiet_start'] or now.hour < self.settings['quiet_end'])
                 count = self.db.execute("SELECT count(*) FROM triggers WHERE event_id=? AND status='fired'", (e['id'],)).fetchone()[0]
                 valid = (e['status'] == 'active' and parse_time(e['time']) > now and not quiet

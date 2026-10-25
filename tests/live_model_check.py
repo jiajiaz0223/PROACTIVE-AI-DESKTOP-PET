@@ -41,17 +41,22 @@ def run(model='qwen3:4b',endpoint='http://127.0.0.1:11435'):
                 print(json.dumps(record,ensure_ascii=False),flush=True)
                 return source,p
             s,p=check('Chinese relative commitment','五分鐘後要開專題會議，請先準備簡報。',
-                lambda p:len(p)==1 and p[0]['action']=='create' and p[0]['relative_minutes']==5 and not p[0]['needs_review'] and any('簡報' in x for x in p[0]['preparations']))
+                lambda p:len(p)==1 and p[0]['action']=='create' and
+                (p[0]['relative_minutes']==5 or (p[0]['time'] and parse_time(p[0]['time'])==anchor+timedelta(minutes=5))) and
+                not p[0]['needs_review'] and any('簡報' in x for x in p[0]['preparations']))
             store.ingest(p,s)
             events=store.events()
+            records[-1]['passed']=records[-1]['passed'] and len(events)==1 and parse_time(events[0]['time'])==anchor+timedelta(minutes=5)
             if events:
                 e=events[0]
                 s,p=check('Selected event reschedule','剛才的專題會議延後十分鐘。',
                     lambda p:len(p)==1 and p[0]['action']=='update' and p[0]['target_event_id']==e['id'] and p[0]['shift_minutes']==10 and not p[0]['needs_review'],events,e['id'])
                 store.ingest(p,s)
+                records[-1]['passed'] = records[-1]['passed'] and parse_time(store.event(e['id'])['time'])==anchor+timedelta(minutes=15)
                 s,p=check('Selected event cancellation','取消剛才的專題會議。',
                     lambda p:len(p)==1 and p[0]['action']=='cancel' and p[0]['target_event_id']==e['id'] and not p[0]['needs_review'],store.events(),e['id'])
                 store.ingest(p,s)
+                records[-1]['passed'] = records[-1]['passed'] and store.event(e['id'])['status']=='cancelled' and not store.triggers()
             check('Explicit date and morning hour','Your interview with Acme is Friday, October 16, 2026 at 9:00 AM in Office B. Bring your portfolio.',
                 lambda p:len(p)==1 and p[0]['action']=='create' and parse_time(p[0]['time'])==datetime(2026,10,16,9,tzinfo=TZ) and p[0]['location']=='Office B')
             check('Tomorrow afternoon','明天下午三點到台大圖書館討論專題，請帶筆電。',

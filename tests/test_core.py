@@ -55,6 +55,13 @@ class CoreTests(unittest.TestCase):
         self.clock.advance(240);self.assertEqual(self.store.tick(),[])
         self.assertEqual(self.store.event(e['id'])['status'],'cancelled')
 
+    def test_shift_anchors_to_original_even_if_model_also_sets_relative(self):
+        e=self.create(minutes=5)
+        self.store.ingest([{'action':'update','target_event_id':e['id'],'shift_minutes':10,
+                           'relative_minutes':10,'time':'2026-10-12T12:10:00+08:00'}],
+                          self.store.source('delay ten minutes','user'))
+        self.assertEqual(parse_time(self.store.event(e['id'])['time']),self.clock.now()+timedelta(minutes=15))
+
     def test_preparation_done_persists(self):
         e=self.create(minutes=48*60,preps=['Slides'])
         self.assertEqual(len(self.store.triggers()),2)
